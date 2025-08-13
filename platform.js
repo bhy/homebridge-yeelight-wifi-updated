@@ -89,12 +89,12 @@ class YeePlatform {
     const deviceId = getDeviceId(id);
     const name = getName(`${model}-${deviceId}`, this.config);
     const hidden = blacklist(deviceId, this.config);
-    let accessory = this.devices[id];
+    let accessory = this.devices[deviceId];
 
     if (hidden === true) {
       this.log.debug(`Device ${name} is blacklisted, ignoring...`);
       try {
-        delete this.devices[id];
+        delete this.devices[deviceId];
         this.api.unregisterPlatformAccessories(
           'homebridge-yeelight',
           'yeelight',
@@ -112,12 +112,12 @@ class YeePlatform {
       .filter((f) => !hidden.includes(f));
 
     if (!accessory) {
-      this.log(`Initializing new accessory ${id} with name ${name}...`);
-      const uuid = global.UUIDGen.generate(id);
+      this.log(`Initializing new accessory ${deviceId} with name ${name}...`);
+      const uuid = global.UUIDGen.generate(deviceId);
       accessory = new global.Accessory(name, uuid);
-      accessory.context.did = id;
+      accessory.context.did = deviceId;
       accessory.context.model = model;
-      this.devices[id] = accessory;
+      this.devices[deviceId] = accessory;
       this.api.registerPlatformAccessories('homebridge-yeelight', 'yeelight', [
         accessory,
       ]);
@@ -163,7 +163,7 @@ class YeePlatform {
     }
 
     const Bulb = class extends pipe(...mixins)(YeeBulb) {};
-    return new Bulb({ id, model, endpoint, accessory, limits, ...props }, this);
+    return new Bulb({ id: deviceId, model, endpoint, accessory, limits, ...props }, this);
   }
 }
 
