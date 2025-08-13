@@ -8,7 +8,7 @@ module.exports = (homebridge) => {
   global.EOL = '\r\n';
 
   homebridge.registerPlatform(
-    'homebridge-yeelight',
+    'homebridge-yeelight-wifi',
     'yeelight',
     YeePlatform,
     true,
