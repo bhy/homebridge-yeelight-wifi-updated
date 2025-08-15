@@ -1,7 +1,7 @@
 {
-  "name": "homebridge-yeelight-wifi",
-  "version": "0.0.0-development",
-  "description": "Homebridge plugin for YeeLight bulbs & lamps.",
+  "name": "homebridge-yeelight-wifi-fixed",
+  "version": "1.0.0",
+  "description": "Homebridge plugin for YeeLight bulbs & lamps with fixed accessory persistence.",
   "license": "MIT",
   "keywords": [
     "homebridge-plugin",
@@ -10,14 +10,15 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/vieira/homebridge-yeelight-wifi.git"
+    "url": "git+https://github.com/galoiring/homebridge-yeelight-wifi-updating.git"
   },
   "author": {
-    "name": "vieira"
+    "name": "galoiring"
   },
   "bugs": {
-    "url": "http://github.com/vieira/homebridge-yeelight-wifi/issues"
+    "url": "https://github.com/galoiring/homebridge-yeelight-wifi-updating/issues"
   },
+  "homepage": "https://github.com/galoiring/homebridge-yeelight-wifi-updating#readme",
   "contributors": [
     {
       "name": "Oleksandr Boichenko",
@@ -41,6 +42,7 @@
     "node": ">=16.16.0",
     "homebridge": ">=1.3.0"
   },
+  "main": "index.js",
   "scripts": {
     "start": "DEBUG=Yeelight homebridge -D -R -P . -U ./homebridge",
     "format": "prettier --write \"**/*.{js,md}\"",
