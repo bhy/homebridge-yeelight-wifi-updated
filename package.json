@@ -1,12 +1,19 @@
 {
-  "name": "homebridge-yeelight-wifi-fixed",
+  "name": "homebridge-yeelight-wifi-updated",
   "version": "1.0.0",
-  "description": "Homebridge plugin for YeeLight bulbs & lamps with fixed accessory persistence.",
+  "description": "Actively maintained Homebridge plugin for YeeLight bulbs & lamps with bug fixes and improvements.",
   "license": "MIT",
   "keywords": [
     "homebridge-plugin",
     "yeelight",
-    "ceiling"
+    "ceiling",
+    "light",
+    "bulb",
+    "smart-home",
+    "iot",
+    "maintained",
+    "updated",
+    "wifi"
   ],
   "repository": {
     "type": "git",
