@@ -18,10 +18,12 @@ const Temperature = (Device) =>
           // In moonlight mode (1) do not attempt to change the temperature
           // since it would switch the device to daylight mode (0)
           if (this.activeMode === 1) {
-            this.log.debug(
-              `Device ${this.name} is in moonlight mode.`,
-              'Skipping setting temperature.'
-            );
+            if (this.debugMode) {
+              this.log.debug(
+                `Device ${this.name} is in moonlight mode.`,
+                'Skipping setting temperature.'
+              );
+            }
             callback(null);
             return;
           }

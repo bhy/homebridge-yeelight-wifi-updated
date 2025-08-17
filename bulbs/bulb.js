@@ -12,6 +12,7 @@ class YeeBulb {
     this.sock = null;
     this.accessory = accessory;
     this.config = platform.config || {};
+    this.debugMode = platform.debugMode || false;
     this.endpoint = endpoint;
     const { retries = 5, timeout = 100 } = this.config.connection || {};
     this.retries = retries;
@@ -80,7 +81,9 @@ class YeeBulb {
 
   updateStateFromProp(prop, value) {
     if (prop !== 'power') {
-      this.log.debug(`${prop} is not supported in Homekit, skipping.`);
+      if (this.debugMode) {
+        this.log.debug(`${prop} is not supported in Homekit, skipping.`);
+      }
       return;
     }
     this.power = value;
@@ -111,7 +114,9 @@ class YeeBulb {
       }
 
       this.sock = net.connect(this.port, this.host, () => {
-        this.log.debug(`connected to ${this.host}.`);
+        if (this.debugMode) {
+          this.log.debug(`connected to ${this.host}.`);
+        }
         resolve();
       });
 
@@ -149,7 +154,9 @@ class YeeBulb {
   }
 
   async sendCmd(cmd) {
-    this.log.info(`Sending command: ${JSON.stringify(cmd)}`);
+    if (this.debugMode) {
+      this.log.info(`Sending command: ${JSON.stringify(cmd)}`);
+    }
     const { retries, timeout } = this;
     cmd.id = id.next().value;
     for (let i = 0; i <= retries; i += 1) {
@@ -159,9 +166,11 @@ class YeeBulb {
         // eslint-disable-next-line no-await-in-loop
         return await this._sendCmd(cmd, t);
       } catch (err) {
-        this.log.debug(
-          `${this.did}: failed communication attempt ${i} after ${t}ms.`
-        );
+        if (this.debugMode) {
+          this.log.debug(
+            `${this.did}: failed communication attempt ${i} after ${t}ms.`
+          );
+        }
         if (err === 'EHOSTUNREACH') break;
       }
     }
@@ -190,7 +199,9 @@ class YeeBulb {
           }, duration);
           this.sock.write(msg + global.EOL);
           this.cmds[cmd.id] = { resolve, reject, timeout };
-          this.log.debug(msg);
+          if (this.debugMode) {
+            this.log.debug(msg);
+          }
         });
     });
   }
@@ -203,7 +214,9 @@ class YeeBulb {
     clearTimeout(cmd.timeout);
 
     if ('result' in message) {
-      this.log.debug(message);
+      if (this.debugMode) {
+        this.log.debug(message);
+      }
       cmd.resolve(message.result);
     } else if ('error' in message) {
       this.log.error(message);

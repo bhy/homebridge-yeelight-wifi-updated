@@ -1,6 +1,6 @@
 const { isInteger } = Number;
 
-const Color = Device => {
+const Color = (Device) => {
   let hue;
   let sat;
 

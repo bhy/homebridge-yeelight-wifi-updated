@@ -12,7 +12,9 @@ const MoonlightMode = (Device) =>
       const [activeMode] = await this.getProperty(['active_mode']);
       if (!activeMode) return;
 
-      this.log(`Device ${this.name} supports moonlight mode`);
+      if (this.debugMode) {
+        this.log(`Device ${this.name} supports moonlight mode`);
+      }
       this.activeMode = Number(activeMode) || DAYLIGHT_MODE;
 
       this.moonlightModeService =
@@ -43,9 +45,11 @@ const MoonlightMode = (Device) =>
 
     async setMoonlightMode(state) {
       const { brightness: transition = 400 } = this.config.transitions || {};
-      this.log.debug(
-        `Setting ${state ? 'moon' : 'day'}light mode on device ${this.did}`
-      );
+      if (this.debugMode) {
+        this.log.debug(
+          `Setting ${state ? 'moon' : 'day'}light mode on device ${this.did}`
+        );
+      }
       await this.sendCmd({
         method: 'set_power',
         params: ['on', 'smooth', transition, state ? 5 : 1],

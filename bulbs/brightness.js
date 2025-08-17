@@ -1,4 +1,4 @@
-const Brightness = Device =>
+const Brightness = (Device) =>
   class extends Device {
     constructor(props, platform) {
       super(props, platform);

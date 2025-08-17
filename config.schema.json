@@ -1,0 +1,116 @@
+{
+  "pluginAlias": "YeelightPlatform",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "Yeelight Platform",
+        "required": true
+      },
+      "debug": {
+        "title": "Debug Mode",
+        "type": "boolean",
+        "default": false,
+        "description": "Enable debug logging for troubleshooting. This will show detailed information about device communication and internal operations."
+      },
+      "timeout": {
+        "title": "Connection Timeout (ms)",
+        "type": "number",
+        "default": 5000,
+        "minimum": 1000,
+        "maximum": 30000,
+        "description": "Time to wait for device responses before timing out."
+      },
+      "interface": {
+        "title": "Multicast Interface",
+        "type": "string",
+        "description": "Network interface to use for device discovery (optional). Leave empty to use default interface."
+      },
+      "transition": {
+        "title": "Default Transition Time (ms)",
+        "type": "number",
+        "default": 400,
+        "minimum": 0,
+        "maximum": 5000,
+        "description": "Default time for color/brightness transitions."
+      },
+      "blacklist": {
+        "title": "Device Blacklist",
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of device IDs to ignore during discovery."
+      },
+      "devices": {
+        "title": "Device-Specific Settings",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "title": "Device ID",
+              "type": "string",
+              "required": true
+            },
+            "name": {
+              "title": "Device Name",
+              "type": "string"
+            },
+            "blacklist": {
+              "title": "Blacklisted Features",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["color", "temperature", "brightness", "moonlight"]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "layout": [
+    {
+      "type": "fieldset",
+      "title": "Basic Settings",
+      "expandable": false,
+      "items": [
+        "name",
+        "debug"
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Connection Settings",
+      "expandable": true,
+      "items": [
+        "timeout",
+        "interface",
+        "transition"
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Device Management",
+      "expandable": true,
+      "items": [
+        "blacklist",
+        {
+          "key": "devices",
+          "type": "array",
+          "title": "Device-Specific Settings",
+          "items": [
+            "devices[].id",
+            "devices[].name",
+            "devices[].blacklist"
+          ]
+        }
+      ]
+    }
+  ]
+}

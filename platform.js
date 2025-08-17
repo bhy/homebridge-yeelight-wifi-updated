@@ -13,7 +13,6 @@ const { getDeviceId, getName, blacklist, sleep, pipe } = require('./utils');
 class YeePlatform {
   constructor(log, config, api) {
     if (!api) return;
-    log.debug(`starting YeePlatform using homebridge API v${api.version}`);
 
     this.searchMessage = Buffer.from(
       ['M-SEARCH * HTTP/1.1', 'MAN: "ssdp:discover"', 'ST: wifi_bulb'].join(
@@ -24,6 +23,11 @@ class YeePlatform {
     this.port = 1982;
     this.log = log;
     this.config = config;
+    this.debugMode = config?.debug || false;
+
+    if (this.debugMode) {
+      log.debug(`starting YeePlatform using homebridge API v${api.version}`);
+    }
     this.sock = dgram.createSocket('udp4');
     this.devices = {};
 
@@ -31,7 +35,7 @@ class YeePlatform {
       this.sock.setBroadcast(true);
       this.sock.setMulticastTTL(128);
       this.sock.addMembership(this.addr);
-      const multicastInterface = config?.multicast?.interface;
+      const multicastInterface = config?.interface;
       if (multicastInterface) {
         this.sock.setMulticastInterface(multicastInterface);
       }
@@ -60,7 +64,9 @@ class YeePlatform {
   }
 
   search() {
-    this.log('Sending search request...');
+    if (this.debugMode) {
+      this.log('Sending search request...');
+    }
     this.sock.send(
       this.searchMessage,
       0,
@@ -81,7 +87,9 @@ class YeePlatform {
       headers[k] = v;
     });
     const endpoint = headers.Location.split('//')[1];
-    this.log(`Received advertisement from ${getDeviceId(headers.id)}.`);
+    if (this.debugMode) {
+      this.log(`Received advertisement from ${getDeviceId(headers.id)}.`);
+    }
     this.buildDevice(endpoint, headers);
   }
 
@@ -92,7 +100,9 @@ class YeePlatform {
     let accessory = this.devices[deviceId];
 
     if (hidden === true) {
-      this.log.debug(`Device ${name} is blacklisted, ignoring...`);
+      if (this.debugMode) {
+        this.log.debug(`Device ${name} is blacklisted, ignoring...`);
+      }
       try {
         delete this.devices[deviceId];
         this.api.unregisterPlatformAccessories(
@@ -133,37 +143,52 @@ class YeePlatform {
     }
 
     if (features.includes('set_bright')) {
-      this.log(`Device ${name} supports brightness`);
+      if (this.debugMode) {
+        this.log(`Device ${name} supports brightness`);
+      }
       mixins.push(Brightness);
     }
 
     if (features.includes('set_hsv')) {
-      this.log(`Device ${name} supports color`);
+      if (this.debugMode) {
+        this.log(`Device ${name} supports color`);
+      }
       mixins.push(Color);
     }
 
     if (features.includes('set_ct_abx')) {
-      this.log(`Device ${name} supports color temperature`);
+      if (this.debugMode) {
+        this.log(`Device ${name} supports color temperature`);
+      }
       mixins.push(Temperature);
     }
 
     if (features.includes('bg_set_power')) {
-      this.log(`Device ${name} supports backlight`);
+      if (this.debugMode) {
+        this.log(`Device ${name} supports backlight`);
+      }
       mixins.push(Backlight);
     }
 
     if (features.includes('bg_set_bright')) {
-      this.log(`Device ${name} supports backlight brightness`);
+      if (this.debugMode) {
+        this.log(`Device ${name} supports backlight brightness`);
+      }
       mixins.push(BacklightBrightness);
     }
 
     if (features.includes('bg_set_hsv')) {
-      this.log(`Device ${name} supports backlight color`);
+      if (this.debugMode) {
+        this.log(`Device ${name} supports backlight color`);
+      }
       mixins.push(BacklightColor);
     }
 
     const Bulb = class extends pipe(...mixins)(YeeBulb) {};
-    return new Bulb({ id: deviceId, model, endpoint, accessory, limits, ...props }, this);
+    return new Bulb(
+      { id: deviceId, model, endpoint, accessory, limits, ...props },
+      this
+    );
   }
 }
 

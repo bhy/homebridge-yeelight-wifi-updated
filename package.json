@@ -1,6 +1,6 @@
 {
   "name": "homebridge-yeelight-wifi-updated",
-  "version": "1.0.0",
+  "version": "1.0.1-beta.1",
   "description": "Actively maintained Homebridge plugin for YeeLight bulbs & lamps with bug fixes and improvements.",
   "license": "MIT",
   "keywords": [

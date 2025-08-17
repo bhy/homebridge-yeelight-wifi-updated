@@ -11,6 +11,6 @@ module.exports = (homebridge) => {
     'homebridge-yeelight-wifi-updated',
     'yeelight',
     YeePlatform,
-    true,
+    true
   );
 };
