@@ -88,7 +88,8 @@ class YeePlatform {
     });
     const endpoint = headers.Location.split('//')[1];
     if (this.debugMode) {
-      this.log(`Received advertisement from ${getDeviceId(headers.id)}.`);
+      const ip = endpoint.split(':')[0];
+      this.log(`Received advertisement from ${getDeviceId(headers.id)} at ${ip}.`);
     }
     this.buildDevice(endpoint, headers);
   }
@@ -133,7 +134,11 @@ class YeePlatform {
       ]);
     }
 
-    if (accessory?.initialized) return;
+    // If accessory already initialized, just update endpoint and return
+    if (accessory?.initialized && accessory.bulb) {
+      accessory.bulb.updateEndpoint(endpoint);
+      return;
+    }
 
     const mixins = [];
     const limits = devices[model] || devices['default'];
@@ -185,10 +190,13 @@ class YeePlatform {
     }
 
     const Bulb = class extends pipe(...mixins)(YeeBulb) {};
-    return new Bulb(
+    const bulb = new Bulb(
       { id: deviceId, model, endpoint, accessory, limits, ...props },
       this
     );
+    // Keep reference for future endpoint updates
+    accessory.bulb = bulb;
+    return bulb;
   }
 }
 

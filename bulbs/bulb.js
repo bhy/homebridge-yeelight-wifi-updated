@@ -65,6 +65,25 @@ class YeeBulb {
     return `${this.host}:${this.port}`;
   }
 
+  updateEndpoint(endpoint) {
+    const previousEndpoint = this.endpoint;
+    if (previousEndpoint === endpoint) {
+      return;
+    }
+    this.endpoint = endpoint;
+    if (this.sock && !this.sock.destroyed) {
+      try {
+        this.sock.destroy();
+      } catch (_) {}
+      this.sock = null;
+    }
+    if (this.debugMode) {
+      this.log.debug(
+        `${this.name}: endpoint changed ${previousEndpoint} -> ${this.endpoint}`
+      );
+    }
+  }
+
   set endpoint(endpoint) {
     const [host, port] = endpoint.split(':');
     this.host = host;
