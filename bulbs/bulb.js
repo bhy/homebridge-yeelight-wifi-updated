@@ -134,7 +134,9 @@ class YeeBulb {
 
       this.sock = net.connect(this.port, this.host, () => {
         if (this.debugMode) {
-          this.log.debug(`connected to ${this.host}.`);
+          this.log.debug(
+            `connected to ${this.host}:${this.port} (device ${this.did}).`
+          );
         }
         resolve();
       });
@@ -145,12 +147,16 @@ class YeeBulb {
       );
 
       this.sock.on('error', (error) => {
-        this.log.error(`${this.host}: ${error.message}.`);
+        this.log.error(
+          `${this.did}@${this.host}:${this.port} error: ${error.message}.`
+        );
         reject(error.code);
       });
 
       this.sock.on('close', (hadError) => {
-        this.log.warn(`${this.host} closed. error? ${hadError}.`);
+        this.log.warn(
+          `${this.did}@${this.host}:${this.port} connection closed. error? ${hadError}.`
+        );
         this.cmds = {};
         reject(new Error(`close: error? ${hadError}`));
       });
@@ -174,7 +180,11 @@ class YeeBulb {
 
   async sendCmd(cmd) {
     if (this.debugMode) {
-      this.log.info(`Sending command: ${JSON.stringify(cmd)}`);
+      this.log.info(
+        `Sending command to ${this.host} (device ${this.did}): ${JSON.stringify(
+          cmd
+        )}`
+      );
     }
     const { retries, timeout } = this;
     cmd.id = id.next().value;
@@ -187,7 +197,7 @@ class YeeBulb {
       } catch (err) {
         if (this.debugMode) {
           this.log.debug(
-            `${this.did}: failed communication attempt ${i} after ${t}ms.`
+            `${this.did}@${this.host}:${this.port} failed communication attempt ${i} after ${t}ms.`
           );
         }
         if (err === 'EHOSTUNREACH') break;
@@ -195,7 +205,7 @@ class YeeBulb {
     }
     this.sock.destroy();
     this.log.error(
-      `${this.did}: failed to send cmd ${cmd.id} after ${retries} retries.`
+      `${this.did}@${this.host}:${this.port}: failed to send cmd ${cmd.id} after ${retries} retries.`
     );
     return Promise.reject(new Error(`${cmd.id}`));
   }
@@ -219,7 +229,7 @@ class YeeBulb {
           this.sock.write(msg + global.EOL);
           this.cmds[cmd.id] = { resolve, reject, timeout };
           if (this.debugMode) {
-            this.log.debug(msg);
+            this.log.debug(`${this.did}@${this.host}:${this.port} -> ${msg}`);
           }
         });
     });
@@ -234,14 +244,24 @@ class YeeBulb {
 
     if ('result' in message) {
       if (this.debugMode) {
-        this.log.debug(message);
+        this.log.debug(
+          `${this.did}@${this.host}:${this.port} <- ${JSON.stringify(message)}`
+        );
       }
       cmd.resolve(message.result);
     } else if ('error' in message) {
-      this.log.error(message);
+      this.log.error(
+        `${this.did}@${this.host}:${this.port} response error: ${JSON.stringify(
+          message
+        )}`
+      );
       cmd.reject(message.error.message);
     } else {
-      this.log.error(`unexpected result from ${this.host}: ${message}`);
+      this.log.error(
+        `unexpected result from ${this.did}@${this.host}:${this.port}: ${JSON.stringify(
+          message
+        )}`
+      );
       cmd.reject(message.error.message);
     }
     delete this.cmds[message.id];
