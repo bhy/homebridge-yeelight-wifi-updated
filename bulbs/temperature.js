@@ -50,11 +50,11 @@ const Temperature = (Device) =>
       this._temperature = Math.floor(10 ** 6 / Number(kelvin));
     }
 
-    async setTemperature(mired) {
+    async setTemperature(mired, { force = false } = {}) {
       // If we are already in color temperature mode (2) and the current
       // temperature matches the new temperature there is no need to send
       // another command.
-      if (this.temperature === mired && this.colorMode === 2) return;
+      if (!force && this.temperature === mired && this.colorMode === 2) return;
 
       // If we receive a direct command from the user to go to a certain color
       // temperature, turn on the device and go to that temperature.
@@ -126,7 +126,7 @@ const Temperature = (Device) =>
           if (reason !== 'write') return;
           if (!this.controller.isAdaptiveLightingActive()) return;
           if (!oldValue && newValue) {
-            this.setTemperature(this._temperature--);
+            this.setTemperature(this._temperature, { force: true });
           }
         });
     }
