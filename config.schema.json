@@ -30,6 +30,14 @@
         "type": "string",
         "description": "Network interface to use for device discovery (optional). Leave empty to use default interface."
       },
+      "discoveryIntervalMs": {
+        "title": "Discovery Interval (ms)",
+        "type": "number",
+        "default": 15000,
+        "minimum": 1000,
+        "maximum": 600000,
+        "description": "How often to broadcast discovery search to re-discover devices."
+      },
       "transition": {
         "title": "Default Transition Time (ms)",
         "type": "number",
@@ -91,6 +99,7 @@
       "items": [
         "timeout",
         "interface",
+        "discoveryIntervalMs",
         "transition"
       ]
     },

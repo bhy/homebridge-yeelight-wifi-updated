@@ -24,6 +24,8 @@ class YeePlatform {
     this.log = log;
     this.config = config;
     this.debugMode = config?.debug || false;
+    this.discoveryIntervalMs = Number(config?.discoveryIntervalMs) || 15000;
+    this.discoveryTimer = null;
 
     if (this.debugMode) {
       log.debug(`starting YeePlatform using homebridge API v${api.version}`);
@@ -44,16 +46,21 @@ class YeePlatform {
     this.api = api;
     this.api.on('didFinishLaunching', async () => {
       this.sock.on('message', this.handleMessage.bind(this));
-      log(`Searching for known devices...`);
-      do {
-        this.search();
-        // eslint-disable-next-line no-await-in-loop
-        await sleep(15000);
-      } while (
-        Object.values(this.devices).some((accessory) => !accessory.initialized)
+      log(
+        `Starting continuous discovery. Interval: ${this.discoveryIntervalMs}ms`
       );
+      this.search();
+      this.discoveryTimer = setInterval(
+        () => this.search(),
+        this.discoveryIntervalMs
+      );
+    });
 
-      log(`All known devices found. Stopping proactive search.`);
+    this.api.on('shutdown', () => {
+      if (this.discoveryTimer) {
+        clearInterval(this.discoveryTimer);
+        this.discoveryTimer = null;
+      }
     });
   }
 
