@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "YeelightPlatform",
+  "pluginAlias": "yeelight",
   "pluginType": "platform",
   "singular": true,
   "schema": {
