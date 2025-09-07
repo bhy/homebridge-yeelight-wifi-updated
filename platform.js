@@ -141,9 +141,13 @@ class YeePlatform {
       ]);
     }
 
-    // If accessory already initialized, just update endpoint and return
+    // If accessory already initialized, just update endpoint and proactively reconnect
     if (accessory?.initialized && accessory.bulb) {
       accessory.bulb.updateEndpoint(endpoint);
+      // Attempt to reconnect so pending desired state can flush on connect
+      try {
+        accessory.bulb.connect().catch(() => {});
+      } catch (_) {}
       return;
     }
 
@@ -203,6 +207,10 @@ class YeePlatform {
     );
     // Keep reference for future endpoint updates
     accessory.bulb = bulb;
+    // Proactively connect on first discovery to enable immediate reconciliation
+    try {
+      bulb.connect().catch(() => {});
+    } catch (_) {}
     return bulb;
   }
 }
