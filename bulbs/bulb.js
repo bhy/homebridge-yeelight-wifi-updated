@@ -345,7 +345,23 @@ class YeeBulb {
       'bg_set_hsv',
       'bg_set_bright',
     ];
+    // Disable set_ct_abx if pending set_power is switching to moonlight mode
+    let disableCt = false;
+    try {
+      const sp = this.pendingByKey['set_power'];
+      if (sp && Array.isArray(sp.params)) {
+        const mode = sp.params[3];
+        const target = sp.params[0];
+        // Moonlight mode indicated by mode === 5 when turning on
+        if (target === 'on' && Number(mode) === 5) {
+          disableCt = true;
+        }
+      }
+    } catch (_) {}
     for (const method of order) {
+      if (disableCt && method === 'set_ct_abx') {
+        continue;
+      }
       const cmd = this.pendingByKey[method];
       if (!cmd) continue;
       try {
