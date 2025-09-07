@@ -18,6 +18,13 @@ class YeeBulb {
     this.retries = retries;
     this.timeout = timeout;
 
+    // Collapsed pending map by command method (last one wins)
+    this.pendingByKey = {};
+    // Online flag toggled by socket lifecycle
+    this.online = false;
+    // Prevent concurrent reconciliations
+    this._reconciling = false;
+
     this.accessory
       .getService(global.Service.AccessoryInformation)
       .setCharacteristic(global.Characteristic.Manufacturer, 'YeeLight')
@@ -138,6 +145,9 @@ class YeeBulb {
             `connected to ${this.host}:${this.port} (device ${this.did}).`
           );
         }
+        this.online = true;
+        // Attempt to flush any pending commands on (re)connect
+        this._onConnected();
         resolve();
       });
 
@@ -150,6 +160,7 @@ class YeeBulb {
         this.log.error(
           `${this.did}@${this.host}:${this.port} error: ${error.message}.`
         );
+        this.online = false;
         reject(error.code);
       });
 
@@ -158,6 +169,7 @@ class YeeBulb {
           `${this.did}@${this.host}:${this.port} connection closed. error? ${hadError}.`
         );
         this.cmds = {};
+        this.online = false;
         reject(new Error(`close: error? ${hadError}`));
       });
     });
@@ -187,6 +199,11 @@ class YeeBulb {
       );
     }
     const { retries, timeout } = this;
+    const isGet = cmd && cmd.method === 'get_prop';
+    // Cache raw command (by method) for later replay if needed
+    if (!isGet) {
+      this._cachePending(cmd);
+    }
     cmd.id = id.next().value;
     for (let i = 0; i <= retries; i += 1) {
       const t = timeout << i;
@@ -201,9 +218,25 @@ class YeeBulb {
           );
         }
         if (err === 'EHOSTUNREACH') break;
+        if (i === retries) break;
       }
     }
-    this.sock.destroy();
+    // If we reach here, command failed after retries
+    if (this.sock && !this.sock.destroyed) {
+      try {
+        this.sock.destroy();
+      } catch (_) {}
+    }
+    this.online = false;
+    if (!isGet) {
+      // For state-changing commands, do not reject: we'll flush on reconnect
+      if (this.debugMode) {
+        this.log.debug(
+          `${this.did}@${this.host}:${this.port}: queued command for later flush (cmd ${cmd.id}).`
+        );
+      }
+      return Promise.resolve([]);
+    }
     this.log.error(
       `${this.did}@${this.host}:${this.port}: failed to send cmd ${cmd.id} after ${retries} retries.`
     );
@@ -276,6 +309,54 @@ class YeeBulb {
       this.updateStateFromProp(param, message.params[param]);
     });
     return true;
+  }
+
+  _cachePending(cmd) {
+    if (!cmd || !cmd.method) return;
+    const { method, params } = cmd;
+    // Store minimal shape without id
+    this.pendingByKey[method] = { method, params };
+  }
+
+  // lastKnownState tracking removed as we now rely on replaying raw commands
+
+  async _onConnected() {
+    // Avoid overlapping reconcile runs
+    if (this._reconciling) return;
+    this._reconciling = true;
+    try {
+      await this._flushPending();
+    } catch (err) {
+      if (this.debugMode) {
+        this.log.debug(`Flush pending failed for ${this.did}: ${err && err.message}`);
+      }
+    } finally {
+      this._reconciling = false;
+    }
+  }
+
+  async _flushPending() {
+    const order = [
+      'set_power',
+      'bg_set_power',
+      'set_ct_abx',
+      'set_hsv',
+      'set_bright',
+      'bg_set_hsv',
+      'bg_set_bright',
+    ];
+    for (const method of order) {
+      const cmd = this.pendingByKey[method];
+      if (!cmd) continue;
+      try {
+        const req = { method: cmd.method, params: cmd.params };
+        // Assign new id inside sendCmd
+        await this.sendCmd(req);
+        // Do not delete pending after flush; keep as desired state for future cycles
+      } catch (_) {
+        // Keep pending for next reconnect
+      }
+    }
   }
 }
 
