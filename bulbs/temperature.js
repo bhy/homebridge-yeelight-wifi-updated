@@ -126,6 +126,9 @@ const Temperature = (Device) =>
           if (reason !== 'write') return;
           if (!this.controller.isAdaptiveLightingActive()) return;
           if (!oldValue && newValue) {
+            if (this.activeMode === 1) {
+              return;
+            }
             this.setTemperature(this._temperature, { force: true });
           }
         });
